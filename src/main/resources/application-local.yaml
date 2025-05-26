@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    driver-class-name: oracle.jdbc.OracleDriver
+    url: jdbc:oracle:thin:@//devnidb:1521/ttldevnidbpdb.db
+    username: otn_stitching
+    password: otn2024
+
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.Oracle12cDialect
+        show_sql: false
+    hibernate:
+      ddl-auto: none

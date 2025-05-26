@@ -1,0 +1,74 @@
+---
+spring:
+  application:
+    name: tejas-ptn-stitching
+  main:
+    web-application-type: none
+    logging:
+  level:
+    org.springframework: DEBUG
+    
+config:
+  use-cache: true
+  db-insert: true
+  network-manager:
+    name: TJ5100 NMS
+    host: ${TEJAS_PTN_BASE_URL:https://172.23.105.26:446}
+    authentication:
+      username: ${TEJAS_PTN_USER:nbi_admin}
+      password: ${TEJAS_PTN_PASSWORD:Tejas@2025}
+    endpoints:
+      - name: auth
+        path: /nmsnbi-rest/tapi/data/context/auth-context/auth-token
+        method: POST
+      - name: get-circuit-data
+        host: https://172.23.105.26:446
+        path: /nmsnbi-rest/tapi/data/context/physical-context/device={node_uuid}/equipment
+        method: GET
+      - name: get-topology-context
+        host: https://172.23.105.26:446
+        path: /nmsnbi-rest/tapi/data/context/topology-context/
+        method: GET
+      - name: get-nw-topology-service
+        host: https://172.23.105.26:446
+        path: /nmsnbi-rest/tapi/data/context/topology-context/nw-topology-service
+        method: GET
+      - name: get-physical-context
+        host: https://172.23.105.26:446
+        path: /nmsnbi-rest/tapi/data/context/physical-context
+      - name: get-node-list
+        host: https://172.23.105.26:446
+        path: /nmsnbi-rest/tapi/data/context/topology-context/topology={uuid}/node
+        method: GET
+      - name: get-node-details
+        host: https://172.23.105.26:446
+        path: /nmsnbi-rest/tapi/data/context/topology-context/topology=TTLEMS-PTN-1/node={nodeUuid}
+        method: GET
+      - name: get-node2-details
+        host: https://172.23.105.26:446
+        path: /nmsnbi-rest/tapi/data/context/topology-context/topology=TTLEMS-PTN-2/node={nodeUuid}
+        method: GET
+      - name: get-node-edge-points
+        host: https://172.23.105.26:446
+        path: /nmsnbi-rest/tapi/data/context/topology-context/topology=TTLEMS-PTN-1/node={nodeUuid}/node-edge-point
+        method: GET
+      - name: get-link-list
+        host: https://172.23.105.26:446
+        path: /nmsnbi-rest/tapi/data/context/topology-context/topology={uuid}/link
+        method: GET
+      - name: get-node-link-details
+        host: https://172.23.105.26:446
+        path: /nmsnbi-rest/tapi/data/context/topology-context/topology=TTLEMS-PTN-1/link={linkUuid}
+        method: GET
+      - name: get-link2-list
+        host: https://172.23.105.26:446
+        path: /nmsnbi-rest/tapi/data/context/topology-context/topology={uuid}/link
+        method: GET
+      - name: get-node-link2-details
+        host: https://172.23.105.26:446
+        path: /nmsnbi-rest/tapi/data/context/topology-context/topology=TTLEMS-PTN-2/link={linkUuid}
+        method: GET
+      - name: get-service
+        host: https://172.23.105.26:446
+        path: /nmsnbi-rest/tapi/data/context/connectivity-context/connectivity-services/filter
+        method: GET

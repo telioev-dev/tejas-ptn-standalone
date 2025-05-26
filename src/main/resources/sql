@@ -1,0 +1,147 @@
+
+  CREATE OR REPLACE FORCE EDITIONABLE VIEW "STITCHING"."TEJAS_PTN_TUNNEL_VIEW" ("TRAIL_ID", "USER_LABEL", "CIRCUIT_ID", "RATE", "TECHNOLOGY", "SPECIFICATION", "PATH_TYPE", "VENDOR", "TOPOLOGY", "A_END_DROP_NODE", "Z_END_DROP_NODE", "A_END_DROP_PORT", "Z_END_DROP_PORT", "SEQUENCE", "CHANNEL", "A_END_NODE", "Z_END_NODE", "A_END_PORT", "Z_END_PORT", "TOPOLOGY_TYPE", "CIRCLE", "SRF_ID", "PATH_ID", "LAST_MODIFIED") AS 
+  select
+  TO_CHAR(td.tunnel_id) as TRAIL_ID,
+td.tunnel_name as USER_LABEL, 
+NULL as CIRCUIT_ID, 
+null as RATE, 
+'Ethernet' as TECHNOLOGY, 
+'INNI Connectivity' as SPECIFICATION, 
+case
+when td.tunnel_role = 'work' THEN 'MAIN'
+when td.tunnel_role = 'protect' THEN 'protected'
+end as PATH_TYPE, 
+tp.vendor as VENDOR, 
+tp.user_label as TOPOLOGY, 
+td.SOURCE_TUNNEL_NODE_NAME as A_END_DROP_NODE, 
+td.DEST_TUNNEL_NODE_NAME as Z_END_DROP_NODE,
+'ETH-' || 
+REGEXP_SUBSTR(td.TUNNEL_A_END, '[^|]+', 1, 3) || '-' || 
+  REGEXP_SUBSTR(td.TUNNEL_A_END, '[^|]+', 1, 4) || '-' || 
+  REGEXP_SUBSTR(td.TUNNEL_A_END, '[^|]+', 1, 5) AS A_END_DROP_PORT, 
+  'ETH-' || 
+REGEXP_SUBSTR(td.TUNNEL_Z_END, '[^|]+', 1, 3) || '-' || 
+  REGEXP_SUBSTR(td.TUNNEL_Z_END, '[^|]+', 1, 4) || '-' || 
+  REGEXP_SUBSTR(td.TUNNEL_Z_END, '[^|]+', 1, 5) AS Z_END_DROP_PORT, 
+null as SEQUENCE, 
+null as CHANNEL, 
+tp.a_end_node as A_END_NODE, 
+tp.z_end_node as Z_END_NODE, 
+tp.a_end_port as A_END_PORT, 
+tp.z_end_port as Z_END_PORT, 
+'NE2NE' as TOPOLOGY_TYPE, 
+tp.circle as CIRCLE, 
+null as SRF_ID, 
+null as PATH_ID, 
+sysdate as LAST_MODIFIED
+from stitching.tejas_ptn_tunnel_dump td
+left join stitching.tejas_ptn_topology tp on td.SOURCE_TL_NODE_NAME = tp.a_end_node and td.DEST_TL_NODE_NAME = tp.z_end_node;
+
+
+create or replace view stitching.tejas_ptn_sia_wo_tunnel as
+WITH numbered AS (
+  SELECT 
+    id,
+    a_end_drop_node,
+    a_end_drop_port,
+    a_end_node,
+    a_end_port,
+    circle,
+    circuit_id,
+    path_type,
+    rate,
+    specification,
+    technology,
+    topology,
+    topology_type,
+    trail_id,
+    user_label,
+    vendor,
+    ROW_NUMBER() OVER (PARTITION BY user_label ORDER BY a_end_drop_node, a_end_drop_port) AS rn
+  FROM stitching.tejas_ptn_trail
+),
+a_nodes AS (
+  SELECT 
+    id,
+    a_end_drop_node,
+    a_end_drop_port,
+    a_end_node,
+    a_end_port,
+    circle,
+    circuit_id,
+    path_type,
+    rate,
+    specification,
+    technology,
+    topology,
+    topology_type,
+    trail_id,
+    user_label,
+    vendor,
+    rn
+  FROM numbered
+  WHERE MOD(rn, 2) = 1
+),
+z_nodes AS (
+  SELECT 
+    id AS z_id,
+    a_end_drop_node AS z_end_drop_node,
+    a_end_drop_port AS z_end_drop_port,
+    a_end_node AS z_end_node,
+    a_end_port AS z_end_port,
+    user_label AS z_user_label,
+    rn
+  FROM numbered
+  WHERE MOD(rn, 2) = 0
+)
+SELECT 
+  a.id,
+  a.a_end_drop_node,
+  a.a_end_drop_port,
+  a.a_end_node,
+  a.a_end_port,
+  a.circle,
+  a.circuit_id,
+  a.path_type,
+  a.rate,
+  a.specification,
+  a.technology,
+  a.topology,
+  a.topology_type,
+  a.trail_id,
+  a.user_label,
+  a.vendor,
+  z.z_end_drop_node,
+  z.z_end_drop_port,
+  z.z_end_node,
+  z.z_end_port
+FROM a_nodes a
+LEFT JOIN z_nodes z
+  ON a.user_label = z.z_user_label AND a.rn + 1 = z.rn;
+
+  create or replace view stitching.tejas_ptn_sia as
+select sa.TRAIL_ID, 
+sa.USER_LABEL, 
+sa.CIRCUIT_ID, 
+sa.RATE, 
+sa.TECHNOLOGY, 
+sa.SPECIFICATION, 
+sa.PATH_TYPE, 
+sa.VENDOR, 
+tv.user_label as TOPOLOGY, 
+sa.A_END_DROP_NODE, 
+sa.Z_END_DROP_NODE,
+sa.A_END_DROP_PORT, 
+sa.Z_END_DROP_PORT, 
+null as SEQUENCE, 
+null as CHANNEL,
+tv.a_end_drop_node as A_END_NODE, 
+tv.z_end_drop_node as Z_END_NODE, 
+tv.a_end_drop_port as A_END_PORT, 
+tv.z_end_drop_port as Z_END_PORT, 
+tv.TOPOLOGY_TYPE, 
+tv.CIRCLE, 
+null as SRF_ID, 
+null as PATH_ID, 
+null as LAST_MODIFIED from stitching.tejas_ptn_sia_wo_tunnel sa
+join stitching.tejas_ptn_tunnel_view tv on tv.trail_id = sa.trail_id;

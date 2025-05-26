@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <springProperty scope="context" name="log.fileName" source="spring.application.name"/>
+    <property scope="context" name="log.fileExtension" value="log"/>
+    <property scope="context" name="log.directory" value="/opt/log/tejas/gpon"/>
+    <property name="CONSOLE_LOG_PATTERN"
+              value="%black(%d{yyyy-MM-dd} | %d{HH:mm:ss.SSS} | %green(%-20.20t) | %highlight(%-5level) | %yellow(%C{1})) | %m%n%throwable "/>
+    <property name="LOG_PATTERN"
+              value="%d{yyyy-MM-dd} | %d{HH:mm:ss.SSS} | %-20.20t | %5p | %C{1} | %m%n%throwable "/>
+
+    <appender name="Console"
+              class="ch.qos.logback.core.ConsoleAppender">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>
+                ${CONSOLE_LOG_PATTERN}
+            </Pattern>
+        </layout>
+    </appender>
+
+    <appender name="RollingFile"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${log.directory}/${log.fileName}.${log.fileExtension}</file>
+        <append>false</append>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <Pattern>${LOG_PATTERN}</Pattern>
+        </encoder>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>
+                <!--%black(%d{ISO8601}) %highlight(%-5level) [%blue(%t)] %yellow(%C{1.}): %msg%n%throwable -->
+                ${LOG_PATTERN}
+            </Pattern>
+        </layout>
+
+        <rollingPolicy
+                class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- rollover daily and when the file reaches 10 MegaBytes -->
+            <fileNamePattern>${log.directory}/archived/${log.fileName}-%d{yyyy-MM-dd}.%i.${log.fileExtension}
+            </fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>50MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+        </rollingPolicy>
+    </appender>
+
+    <appender name="trail-stitching"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${log.directory}/stitching_debug.log</file>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <Pattern>${LOG_PATTERN}</Pattern>
+        </encoder>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>
+                ${LOG_PATTERN}
+            </Pattern>
+        </layout>
+
+        <rollingPolicy
+                class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- rollover daily and when the file reaches 10 MegaBytes -->
+            <fileNamePattern>${log.directory}/archived/stitching_debug.log-%d{yyyy-MM-dd}.%i.${log.fileExtension}
+            </fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>3MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+        </rollingPolicy>
+    </appender>
+    <!-- LOG everything at INFO level -->
+    <root level="${APP_LOGGING_LEVEL:-INFO}">
+        <appender-ref ref="RollingFile"/>
+        <appender-ref ref="Console"/>
+    </root>
+    <logger name="com.teliolabs.stitching" level="${APP_LOGGING_LEVEL:-DEBUG}"/>
+</configuration>
