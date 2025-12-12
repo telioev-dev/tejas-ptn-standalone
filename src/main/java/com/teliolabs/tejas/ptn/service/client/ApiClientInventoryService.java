@@ -371,7 +371,7 @@ public class ApiClientInventoryService extends BaseApiClientService {
                         // || rateCode.equals("111") || rateCode.equals("113")) {
                         // rate = "DWDM";
                     } else {
-                        rate = "UNKNOWN";
+                        rate = "1 GigE";
                     }
 
                 } else if (topologyaddinfo.valueName.equals("user-label")) {
@@ -486,11 +486,12 @@ public class ApiClientInventoryService extends BaseApiClientService {
                         // || rateCode.equals("111") || rateCode.equals("113")) {
                         // rate = "DWDM";
                     } else {
-                        rate = "UNKNOWN";
+                        rate = "1 GigE";
                     }
 
                 } else if (topologyaddinfo.valueName.equals("user-label")) {
                     userLabel = topologyaddinfo.value;
+                    rate = extractBandwidth(userLabel);
                 } else if (topologyaddinfo.valueName.equals("src-tp-label")) {
                     aEndPort = topologyaddinfo.value;
                 } else if (topologyaddinfo.valueName.equals("dest-tp-label")) {
@@ -727,6 +728,9 @@ public class ApiClientInventoryService extends BaseApiClientService {
                             // Extract circuitId and rate
                             circuitId = extractCircuitId(userLabel);
                             rate = extractRate(userLabel);
+                            if (rate.contains("UNKNOWN")) {
+                                rate = "1 GigE";
+                            }
 
                             // // Debug output
                             // System.out.println("User Label: " + userLabel);
@@ -736,7 +740,7 @@ public class ApiClientInventoryService extends BaseApiClientService {
                             // Construct row
                             String[] row2 = { trailId, userLabel, circuitId, rate, "Ethernet", "INNI Connectivity",
                                     "MAIN",
-                                    "SWITCH",
+                                    "PTN-1",
                                     topologyUserLabel,
                                     aEndDropNode, zEndDropNode, aEndDropPort, zEndDropPort, aEndNode, zEndNode,
                                     aEndPort, zEndPort,
@@ -831,6 +835,9 @@ public class ApiClientInventoryService extends BaseApiClientService {
                             // Extract circuitId and rate
                             circuitId = extractCircuitId(userLabel);
                             rate = extractRate(userLabel);
+                            if (rate.contains("UNKNOWN")) {
+                                rate = "1 GigE";
+                            }
 
                             // // Debug output
                             // System.out.println("User Label: " + userLabel);
@@ -840,7 +847,7 @@ public class ApiClientInventoryService extends BaseApiClientService {
                             // Construct row
                             String[] row2 = { trailId, userLabel, circuitId, rate, "Ethernet", "INNI Connectivity",
                                     "MAIN",
-                                    "SWITCH",
+                                    "PTN-2",
                                     topologyUserLabel,
                                     aEndDropNode, zEndDropNode, aEndDropPort, zEndDropPort, aEndNode, zEndNode,
                                     aEndPort, zEndPort,
@@ -860,7 +867,39 @@ public class ApiClientInventoryService extends BaseApiClientService {
         if (matcher.find()) {
             return matcher.group(); // Return the first match
         }
-        return null; // No match found
+        return "1 GigE"; // No match found
+    }
+
+    public static String toGigEFormat(String userLabel) {
+        String varOcg = extractBandwidth(userLabel);
+        if (varOcg == null)
+            return null;
+
+        // Remove all trailing letters like G, Z, B to extract number part
+        String number = varOcg.replaceAll("[A-Za-z]", "");
+
+        // Convert something like 01 -> 1
+        if (number.startsWith("0")) {
+            number = number.replaceFirst("^0+", "");
+        }
+
+        return number + " GigE";
+    }
+
+    // Extract raw bandwidth token from label (e.g., 10GZ, 01GB, 1GZZ)
+    private static String extractBandwidth(String label) {
+
+        if (label == null)
+            return null;
+
+        // 1–3 digits + G + optional letters (G, B, Z)
+        String regex = "\\b(\\d{1,3}G[A-Z]*)\\b";
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile(regex).matcher(label);
+
+        if (m.find()) {
+            return m.group(1);
+        }
+        return null;
     }
 
     public static String extractCircuitId(String input) {
