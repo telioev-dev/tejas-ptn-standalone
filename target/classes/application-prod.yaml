@@ -1,7 +1,7 @@
 spring:
   datasource:
     driver-class-name: oracle.jdbc.OracleDriver
-    url: jdbc:oracle:thin:@//10.129.181.67:1521/ttlprodnidbpdb.db
+    url: jdbc:oracle:thin:@//10.129.181.67:1521/niprodpdb.db
     username: stitching
     password: Telecom2040
   jpa:

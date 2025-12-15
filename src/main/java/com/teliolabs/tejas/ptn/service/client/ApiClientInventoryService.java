@@ -370,10 +370,9 @@ public class ApiClientInventoryService extends BaseApiClientService {
                         // || rateCode.equals("47") || rateCode.equals("49") || rateCode.equals("105")
                         // || rateCode.equals("111") || rateCode.equals("113")) {
                         // rate = "DWDM";
-                    } else {
-                        rate = "1 GigE";
                     }
-
+                } else if (topologyaddinfo.valueName.equals("ZEndCapacity")) {
+                    rate = calculateRate(topologyaddinfo.value);
                 } else if (topologyaddinfo.valueName.equals("user-label")) {
                     userLabel = topologyaddinfo.value;
                 } else if (topologyaddinfo.valueName.equals("src-tp-label")) {
@@ -444,6 +443,16 @@ public class ApiClientInventoryService extends BaseApiClientService {
         topologyService.saveTopologyData(topologyData);
     }
 
+    private String calculateRate(String value) {
+
+        if (value.contains("1000")) {
+            return "1 GigE";
+        } else if (value.contains("10000")) {
+            return "10 GigE";
+        }
+        return "1 GigE";
+    }
+
     public void getPTN2TopologyData() {
         List<String[]> topologyData = new ArrayList<>();
         List<String[]> tunnelData = new ArrayList<>();
@@ -480,18 +489,11 @@ public class ApiClientInventoryService extends BaseApiClientService {
                         rate = "STM64";
                     } else if (rateCode.equals("78") || rateCode.equals("91") || rateCode.equals("90")) {
                         rate = "STM256";
-                        // } else if (rateCode.equals("1") || rateCode.equals("40") ||
-                        // rateCode.equals("41") || rateCode.equals("42")
-                        // || rateCode.equals("47") || rateCode.equals("49") || rateCode.equals("105")
-                        // || rateCode.equals("111") || rateCode.equals("113")) {
-                        // rate = "DWDM";
-                    } else {
-                        rate = "1 GigE";
                     }
-
+                } else if (topologyaddinfo.valueName.equals("ZEndCapacity")) {
+                    rate = topologyaddinfo.value;
                 } else if (topologyaddinfo.valueName.equals("user-label")) {
                     userLabel = topologyaddinfo.value;
-                    rate = extractBandwidth(userLabel);
                 } else if (topologyaddinfo.valueName.equals("src-tp-label")) {
                     aEndPort = topologyaddinfo.value;
                 } else if (topologyaddinfo.valueName.equals("dest-tp-label")) {
@@ -868,38 +870,6 @@ public class ApiClientInventoryService extends BaseApiClientService {
             return matcher.group(); // Return the first match
         }
         return "1 GigE"; // No match found
-    }
-
-    public static String toGigEFormat(String userLabel) {
-        String varOcg = extractBandwidth(userLabel);
-        if (varOcg == null)
-            return null;
-
-        // Remove all trailing letters like G, Z, B to extract number part
-        String number = varOcg.replaceAll("[A-Za-z]", "");
-
-        // Convert something like 01 -> 1
-        if (number.startsWith("0")) {
-            number = number.replaceFirst("^0+", "");
-        }
-
-        return number + " GigE";
-    }
-
-    // Extract raw bandwidth token from label (e.g., 10GZ, 01GB, 1GZZ)
-    private static String extractBandwidth(String label) {
-
-        if (label == null)
-            return null;
-
-        // 1–3 digits + G + optional letters (G, B, Z)
-        String regex = "\\b(\\d{1,3}G[A-Z]*)\\b";
-        java.util.regex.Matcher m = java.util.regex.Pattern.compile(regex).matcher(label);
-
-        if (m.find()) {
-            return m.group(1);
-        }
-        return null;
     }
 
     public static String extractCircuitId(String input) {
