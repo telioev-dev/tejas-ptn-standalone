@@ -16,7 +16,7 @@ config:
     host: ${TEJAS_PTN_BASE_URL:https://172.23.105.26:446}
     authentication:
       username: ${TEJAS_PTN_USER:nbiua_ttl}
-      password: ${TEJAS_PTN_PASSWORD:Wuyx$N95}
+      password: ${TEJAS_PTN_PASSWORD:Tejas@2026}
     endpoints:
       - name: auth
         path: /nmsnbi-rest/tapi/data/context/auth-context/auth-token
